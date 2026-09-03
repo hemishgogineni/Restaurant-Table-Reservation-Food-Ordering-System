@@ -1,0 +1,247 @@
+{
+  "info": {
+    "_postman_id": "c1a3-p07-restaurant-reservation-collection-id",
+    "name": "Restaurant Table Reservation & Food Ordering System (CIA-3)",
+    "description": "Postman API Collection for CIA-3 evaluation covering all 13 required modules: Auth, Menu, Table Inventory, Slot Reservation, Food Orders, Kitchen KDS, Billing, Cancellation Policy, Customer History, Feedback & Rating, Branch Management, and Manager Analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Customer Registration & Authentication",
+      "item": [
+        {
+          "name": "Customer Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Johnson\",\n  \"email\": \"alice@christ.edu\",\n  \"password\": \"password123\",\n  \"role\": \"customer\",\n  \"phone\": \"9876543210\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+          }
+        },
+        {
+          "name": "User Login (Returns JWT)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@christ.edu\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Get Logged In Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Menu Management",
+      "item": [
+        {
+          "name": "Browse Menu by Branch",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/menu?branchId={{branchId}}", "host": ["{{baseUrl}}"], "path": ["api", "menu"], "query": [{ "key": "branchId", "value": "{{branchId}}" }] }
+          }
+        },
+        {
+          "name": "Admin Add Menu Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\",\n  \"name\": \"Tandoori Roti\",\n  \"category\": \"Breads\",\n  \"price\": 40,\n  \"description\": \"Clay oven baked bread\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/menu", "host": ["{{baseUrl}}"], "path": ["api", "menu"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Table Inventory Management",
+      "item": [
+        {
+          "name": "Get Tables by Branch",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/tables?branchId={{branchId}}", "host": ["{{baseUrl}}"], "path": ["api", "tables"], "query": [{ "key": "branchId", "value": "{{branchId}}" }] }
+          }
+        },
+        {
+          "name": "Admin Create Table",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\",\n  \"tableNumber\": \"T-05\",\n  \"capacity\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/tables", "host": ["{{baseUrl}}"], "path": ["api", "tables"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Table Reservation Engine",
+      "item": [
+        {
+          "name": "Check Available Table Slots",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/reservations/available-tables?branchId={{branchId}}&dateTime=2026-09-04T19:00:00.000Z&guestsCount=4", "host": ["{{baseUrl}}"], "path": ["api", "reservations", "available-tables"] }
+          }
+        },
+        {
+          "name": "Reserve a Table Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\",\n  \"tableId\": \"{{tableId}}\",\n  \"dateTime\": \"2026-09-04T19:00:00.000Z\",\n  \"guestsCount\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations", "host": ["{{baseUrl}}"], "path": ["api", "reservations"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 & 8. Food Order & Billing",
+      "item": [
+        {
+          "name": "Place Food Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\",\n  \"orderType\": \"dine-in\",\n  \"items\": [\n    { \"menuItemId\": \"{{menuItemId}}\", \"quantity\": 2 }\n  ],\n  \"remarks\": \"Medium spicy\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          }
+        },
+        {
+          "name": "Get Itemized Bill Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/bill", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "bill"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 & 7. Kitchen KDS Workflow",
+      "item": [
+        {
+          "name": "Kitchen Display Queue (Sorted ASC)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{kitchenToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/kitchen/queue", "host": ["{{baseUrl}}"], "path": ["api", "kitchen", "queue"] }
+          }
+        },
+        {
+          "name": "Update Order Status (Workflow State Machine)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{kitchenToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Preparing\",\n  \"remarks\": \"Food cooking in progress\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "status"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Cancellation Policy",
+      "item": [
+        {
+          "name": "Cancel Table Reservation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Change of travel plans\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations/{{reservationId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "reservations", "{{reservationId}}", "cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Feedback & Rating",
+      "item": [
+        {
+          "name": "Submit Order Rating & Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent food and prompt table service!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/feedback", "host": ["{{baseUrl}}"], "path": ["api", "feedback"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 & 13. Branch & Manager Analytics",
+      "item": [
+        {
+          "name": "Get Manager Reports & Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/manager/reports/analytics", "host": ["{{baseUrl}}"], "path": ["api", "manager", "reports", "analytics"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5050" },
+    { "key": "jwtToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "kitchenToken", "value": "" },
+    { "key": "branchId", "value": "" },
+    { "key": "tableId", "value": "" },
+    { "key": "menuItemId", "value": "" },
+    { "key": "orderId", "value": "" }
+  ]
+}
