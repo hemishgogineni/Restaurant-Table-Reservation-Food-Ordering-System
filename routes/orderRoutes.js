@@ -23,7 +23,7 @@ const updateStatusSchema = Joi.object({
   remarks: Joi.string().allow('', null)
 });
 
-router.post('/', authenticate, validate(placeOrderSchema), orderController.placeOrder);
+router.post('/', authenticate, authorize('customer'), validate(placeOrderSchema), orderController.placeOrder);
 router.put('/:id/status', authenticate, authorize('kitchen', 'admin'), validate(updateStatusSchema), orderController.updateOrderStatus);
 router.get('/my-history', authenticate, orderController.getCustomerOrderHistory);
 router.get('/:id/bill', authenticate, orderController.getOrderBill);

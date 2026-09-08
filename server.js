@@ -35,6 +35,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes Mounting
+
+// HTML Routes - must come before 404 handler
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login-cosmic.html'));
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API Routes Mounting
 app.use('/api/auth', authRoutes);
 app.use('/api/branches', branchRoutes);
 app.use('/api/tables', tableRoutes);
@@ -48,6 +59,16 @@ app.use('/api/manager/reports', reportRoutes);
 // Additional spec endpoint alias: GET /api/customers/:id/orders
 app.get('/api/customers/:id/orders', authenticate, orderController.getCustomerOrderHistory);
 
+// Login route
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login-cosmic.html'));
+});
+
+// Home route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -58,7 +79,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // 404 Handler for Unknown API Endpoints
-app.use((req, res, next) => {
+app.use('/api', (req, res) => {
   res.status(404).json({
     success: false,
     message: `API endpoint ${req.originalUrl} not found`,

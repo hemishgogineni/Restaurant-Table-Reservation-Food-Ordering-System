@@ -1,0 +1,69 @@
+/* ======================================
+   THEME SYSTEM - CSS VARIABLES
+   ====================================== */
+
+:root {
+  /* Light Theme (Default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f0f2f5;
+  
+  --text-primary: #0a0a0a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  
+  --border-color: #e0e0e0;
+  
+  --accent-1: #C1440E;      /* Terracotta/Orange */
+  --accent-2: #D4A017;      /* Gold */
+  --accent-3: #E75A7C;      /* Pink */
+  --accent-blue: #0066ff;
+  --accent-purple: #7c3aed;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-primary: #0A0A0F;
+  --bg-secondary: #16161A;
+  --bg-tertiary: #1E1E24;
+  
+  --text-primary: #F5F5F7;
+  --text-secondary: #A1A1A6;
+  --text-tertiary: #727275;
+  
+  --border-color: #3C3C41;
+  
+  --accent-1: #4C8BF5;      /* Bright Blue */
+  --accent-2: #F5A623;      /* Warm Orange */
+  --accent-3: #ffffff;      /* White */
+  --accent-blue: #5BB2FF;
+  --accent-purple: #A78BFA;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+}
+
+/* ======================================
+   GLOBAL THEME APPLICATION
+   ====================================== */
+
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth theme transitions for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Prevent transition on page load */
+html.preload * {
+  transition: none;
+}

@@ -4,17 +4,33 @@ let currentToken = '';
 let currentBranchId = '';
 let cart = [];
 
-// Demo Credentials Tokens Handler
-const demoUsers = {
-  customer: { email: 'customer@christ.edu', password: 'password123' },
-  kitchen: { email: 'kitchen@christ.edu', password: 'password123' },
-  admin: { email: 'admin@christ.edu', password: 'password123' }
-};
-
 document.addEventListener('DOMContentLoaded', async () => {
-  await autoLogin('customer');
+  const storedToken = localStorage.getItem('authToken');
+  const storedRole = localStorage.getItem('userRole') || 'customer';
+
+  if (!storedToken) {
+    window.location.href = '/login';
+    return;
+  }
+
+  currentToken = storedToken;
+  currentRole = ['customer', 'kitchen', 'admin'].includes(storedRole) ? storedRole : 'customer';
+  updateAuthStatus();
+  updateRoleVisibility(currentRole);
+  const orderPanel = document.getElementById('customer-order-panel');
+  if (orderPanel && currentRole !== 'customer') orderPanel.remove();
+  document.getElementById('tab-history')?.addEventListener('click', loadHistory);
   await loadBranches();
   await loadMenu();
+
+  if (currentRole === 'kitchen') {
+    document.getElementById('tab-kitchen').click();
+    loadKitchenQueue();
+  } else if (currentRole === 'admin') {
+    document.getElementById('tab-admin').click();
+    loadManagerAnalytics();
+    loadKitchenQueue();
+  }
 
   // Set default reservation datetime to 2 hours from now
   const now = new Date();
@@ -22,37 +38,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('resDateTime').value = now.toISOString().slice(0, 16);
 });
 
-async function autoLogin(role) {
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(demoUsers[role])
-    });
-    const data = await res.json();
-    if (data.success) {
-      currentToken = data.data.token;
-      currentRole = role;
-      document.getElementById('authBadge').innerText = `Logged in as: ${role.toUpperCase()} (${data.data.name})`;
-    }
-  } catch (err) {
-    console.error('Auto login failed:', err);
+function updateAuthStatus(name = '') {
+  const badge = document.querySelector('.badge-text');
+  if (!badge) return;
+  const email = localStorage.getItem('userEmail') || '';
+  const identity = name || email || 'User';
+  badge.innerText = `Logged in as: ${currentRole.toUpperCase()} (${identity})`;
+}
+
+function updateRoleVisibility(role) {
+  const reserveTab = document.getElementById('tab-reserve')?.closest('.nav-item');
+  const kitchenTab = document.getElementById('tab-kitchen')?.closest('.nav-item');
+  const adminTab = document.getElementById('tab-admin')?.closest('.nav-item');
+  const historyTab = document.getElementById('tab-history')?.closest('.nav-item');
+  if (role !== 'customer') reserveTab?.remove();
+  if (!['kitchen', 'admin'].includes(role)) kitchenTab?.remove();
+  if (role !== 'admin') adminTab?.remove();
+  if (role === 'kitchen') historyTab?.remove();
+
+  if (role === 'kitchen') {
+    document.getElementById('tab-kitchen')?.click();
+  } else if (role === 'admin') {
+    document.getElementById('tab-admin')?.click();
+  } else {
+    document.getElementById('tab-menu')?.click();
   }
 }
 
-async function switchRole(role) {
-  document.querySelectorAll('.role-btn').forEach((b) => b.classList.remove('active'));
-  event.target.classList.add('active');
-  await autoLogin(role);
-  showToast(`Switched active context to ${role.toUpperCase()}`);
-
-  if (role === 'kitchen') {
-    document.getElementById('tab-kitchen').click();
-    loadKitchenQueue();
-  } else if (role === 'admin') {
-    document.getElementById('tab-admin').click();
-    loadManagerAnalytics();
-  }
+function logout() {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('userRole');
+  currentToken = '';
+  window.location.href = '/login';
 }
 
 async function loadBranches() {
@@ -102,9 +120,11 @@ async function loadMenu() {
             </div>
             <div class="d-flex justify-content-between align-items-center mt-2">
               <span class="fs-5 fw-bold text-success">₹${item.price}</span>
-              <button class="btn btn-sm btn-outline-primary fw-bold" onclick="addToCart('${item._id}', '${item.name}', ${item.price})">
-                <i class="fa-solid fa-plus me-1"></i> Add
-              </button>
+              ${currentRole === 'customer' ? `
+                <button class="btn btn-sm btn-outline-primary fw-bold" onclick="addToCart('${item._id}', '${item.name}', ${item.price})">
+                  <i class="fa-solid fa-plus me-1"></i> Add
+                </button>
+              ` : '<span class="text-muted small">Ordering restricted to customers</span>'}
             </div>
           </div>
         </div>
@@ -334,11 +354,25 @@ async function updateOrderStatus(orderId, status) {
 
 async function loadHistory() {
   const tbody = document.getElementById('historyTableBody');
+  const refreshButton = document.getElementById('refresh-history-btn');
+  if (refreshButton) {
+    refreshButton.disabled = true;
+    refreshButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Loading';
+  }
+
   try {
     const res = await fetch(`${API_BASE}/orders/my-history`, {
       headers: { Authorization: `Bearer ${currentToken}` }
     });
     const data = await res.json();
+
+    if (res.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
+      window.location.href = '/login';
+      return;
+    }
 
     if (!data.success || data.data.length === 0) {
       tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No past orders found.</td></tr>`;
@@ -365,6 +399,11 @@ async function loadHistory() {
       .join('');
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Error loading order history.</td></tr>`;
+  } finally {
+    if (refreshButton) {
+      refreshButton.disabled = false;
+      refreshButton.innerHTML = '<i class="fa-solid fa-refresh me-1"></i>Refresh';
+    }
   }
 }
 
