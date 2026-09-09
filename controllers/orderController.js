@@ -89,6 +89,38 @@ exports.updateOrderStatus = async (req, res, next) => {
       });
     }
 
+    // Workflow State Machine: Enforce sequential transitions
+    // Placed -> Preparing -> Ready -> Served / Delivered
+    const validTransitions = {
+      'Placed': ['Preparing', 'Cancelled'],
+      'Preparing': ['Ready', 'Cancelled'],
+      'Ready': ['Served', 'Delivered', 'Cancelled'],
+      'Served': [],
+      'Delivered': [],
+      'Cancelled': []
+    };
+
+    if (order.status === status) {
+      return res.status(200).json({
+        success: true,
+        message: `Order is already in status '${status}'`,
+        data: {
+          _id: order._id,
+          status: order.status,
+          remarks: order.remarks
+        }
+      });
+    }
+
+    const nextAllowed = validTransitions[order.status] || [];
+    if (req.user && req.user.role !== 'admin' && !nextAllowed.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid workflow transition from '${order.status}' to '${status}'. Allowed next states: ${nextAllowed.length ? nextAllowed.join(', ') : 'None (Terminal state)'}`,
+        errorCode: 'INVALID_STATUS_TRANSITION'
+      });
+    }
+
     order.status = status;
     if (remarks) order.remarks = remarks;
     await order.save();

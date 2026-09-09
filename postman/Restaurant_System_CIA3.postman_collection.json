@@ -181,10 +181,10 @@
       ]
     },
     {
-      "name": "9. Cancellation Policy",
+      "name": "9. Cancellation & Rescheduling Policy",
       "item": [
         {
-          "name": "Cancel Table Reservation",
+          "name": "Cancel Table Reservation (1-hr policy)",
           "request": {
             "method": "PUT",
             "header": [
@@ -196,6 +196,50 @@
               "raw": "{\n  \"reason\": \"Change of travel plans\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/reservations/{{reservationId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "reservations", "{{reservationId}}", "cancel"] }
+          }
+        },
+        {
+          "name": "Reschedule Table Reservation (Conflict check + 1-hr rule)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newDateTime\": \"2026-09-12T20:00:00.000Z\",\n  \"guestsCount\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations/{{reservationId}}/reschedule", "host": ["{{baseUrl}}"], "path": ["api", "reservations", "{{reservationId}}", "reschedule"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Customer History (Orders & Reservations)",
+      "item": [
+        {
+          "name": "Get Customer Order History (by customerId)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customerId}}/orders", "host": ["{{baseUrl}}"], "path": ["api", "customers", "{{customerId}}", "orders"] }
+          }
+        },
+        {
+          "name": "Get Customer Reservation History (by customerId)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customerId}}/reservations", "host": ["{{baseUrl}}"], "path": ["api", "customers", "{{customerId}}", "reservations"] }
+          }
+        },
+        {
+          "name": "Get My Order History (JWT Logged-in Customer)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders/my-history", "host": ["{{baseUrl}}"], "path": ["api", "orders", "my-history"] }
           }
         }
       ]
@@ -221,14 +265,123 @@
       ]
     },
     {
-      "name": "12 & 13. Branch & Manager Analytics",
+      "name": "12. Branch Management",
       "item": [
         {
-          "name": "Get Manager Reports & Analytics",
+          "name": "Get All Restaurant Branches",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/branches", "host": ["{{baseUrl}}"], "path": ["api", "branches"] }
+          }
+        },
+        {
+          "name": "Admin Create Branch",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Christ University Central Branch\",\n  \"address\": \"Hosur Road, Bengaluru, Karnataka 560029\",\n  \"seatingCapacity\": 60,\n  \"phone\": \"080-40129100\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/branches", "host": ["{{baseUrl}}"], "path": ["api", "branches"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Manager Reports & Analytics",
+      "item": [
+        {
+          "name": "Branch Sales Report (Sample Spec API)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/manager/reports/sales", "host": ["{{baseUrl}}"], "path": ["api", "manager", "reports", "sales"] }
+          }
+        },
+        {
+          "name": "Get Complete Manager Analytics (Revenue, Dishes, Peak Hours)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
             "url": { "raw": "{{baseUrl}}/api/manager/reports/analytics", "host": ["{{baseUrl}}"], "path": ["api", "manager", "reports", "analytics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "14. Evaluation Testing Checklist (Rubric Criteria)",
+      "item": [
+        {
+          "name": "1. [Happy Path] User Authentication (200 OK)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@christ.edu\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "2. [Validation Failure] Missing Required Fields (400 Bad Request)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Incomplete User\",\n  \"email\": \"not-an-email\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+          }
+        },
+        {
+          "name": "3. [Authentication Failure] Missing Bearer Token (401 Unauthorized)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
+          }
+        },
+        {
+          "name": "4. [Authorization Failure] Customer Calling Admin Route (403 Forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unauthorized Branch Attempt\",\n  \"address\": \"Bannerghatta\",\n  \"seatingCapacity\": 50\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/branches", "host": ["{{baseUrl}}"], "path": ["api", "branches"] }
+          }
+        },
+        {
+          "name": "5. [Business-Rule Conflict] Double-Booking Table Slot (409 Conflict)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwtToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": \"{{branchId}}\",\n  \"tableId\": \"{{tableId}}\",\n  \"dateTime\": \"2026-09-04T19:00:00.000Z\",\n  \"guestsCount\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reservations", "host": ["{{baseUrl}}"], "path": ["api", "reservations"] }
+          }
+        },
+        {
+          "name": "6. [Not-Found Case] Non-Existent Record ID (404 Not Found)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwtToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders/64f1a2b3c4d5e6f7a8b9c999", "host": ["{{baseUrl}}"], "path": ["api", "orders", "64f1a2b3c4d5e6f7a8b9c999"] }
           }
         }
       ]
@@ -242,6 +395,8 @@
     { "key": "branchId", "value": "" },
     { "key": "tableId", "value": "" },
     { "key": "menuItemId", "value": "" },
-    { "key": "orderId", "value": "" }
+    { "key": "orderId", "value": "" },
+    { "key": "reservationId", "value": "" },
+    { "key": "customerId", "value": "" }
   ]
 }

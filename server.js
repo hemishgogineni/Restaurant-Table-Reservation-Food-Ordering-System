@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { authenticate } = require('./middleware/auth');
 const orderController = require('./controllers/orderController');
+const reservationController = require('./controllers/reservationController');
 
 // Route Imports
 const authRoutes = require('./routes/authRoutes');
@@ -56,18 +57,9 @@ app.use('/api/kitchen', kitchenRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/manager/reports', reportRoutes);
 
-// Additional spec endpoint alias: GET /api/customers/:id/orders
+// Additional spec endpoint aliases:
 app.get('/api/customers/:id/orders', authenticate, orderController.getCustomerOrderHistory);
-
-// Login route
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login-cosmic.html'));
-});
-
-// Home route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.get('/api/customers/:id/reservations', authenticate, reservationController.getCustomerReservationHistory);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

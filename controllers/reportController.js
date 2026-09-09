@@ -72,3 +72,51 @@ exports.getManagerAnalytics = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getBranchSalesReport = async (req, res, next) => {
+  try {
+    const branchSales = await Order.aggregate([
+      { $match: { status: { $ne: 'Cancelled' } } },
+      {
+        $group: {
+          _id: '$branchId',
+          totalRevenue: { $sum: '$totalAmount' },
+          totalTax: { $sum: '$taxAmount' },
+          totalServiceCharge: { $sum: '$serviceCharge' },
+          totalOrders: { $sum: 1 },
+          averageOrderValue: { $avg: '$totalAmount' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'branches',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'branch'
+        }
+      },
+      { $unwind: '$branch' },
+      {
+        $project: {
+          branchId: '$_id',
+          branchName: '$branch.name',
+          branchAddress: '$branch.address',
+          totalRevenue: { $round: ['$totalRevenue', 2] },
+          totalTax: { $round: ['$totalTax', 2] },
+          totalServiceCharge: { $round: ['$totalServiceCharge', 2] },
+          totalOrders: 1,
+          averageOrderValue: { $round: ['$averageOrderValue', 2] }
+        }
+      },
+      { $sort: { totalRevenue: -1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: branchSales.length,
+      data: branchSales
+    });
+  } catch (error) {
+    next(error);
+  }
+};

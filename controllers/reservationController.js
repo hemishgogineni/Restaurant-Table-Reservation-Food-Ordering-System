@@ -184,3 +184,137 @@ exports.getReservations = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.rescheduleReservation = async (req, res, next) => {
+  try {
+    const reservation = await Reservation.findById(req.params.id);
+    if (!reservation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation record not found.',
+        errorCode: 'NOT_FOUND'
+      });
+    }
+
+    // Role check: Only customer owner or admin can reschedule
+    if (req.user.role === 'customer' && reservation.customerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden. You cannot reschedule someone else's reservation.",
+        errorCode: 'FORBIDDEN'
+      });
+    }
+
+    if (reservation.status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot reschedule a cancelled reservation. Please make a new reservation.',
+        errorCode: 'ALREADY_CANCELLED'
+      });
+    }
+
+    // Policy Check: Cannot reschedule within 1 hour of scheduled reservation time
+    const now = new Date();
+    const currentResTime = new Date(reservation.dateTime);
+    const diffInHours = (currentResTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (req.user.role === 'customer' && diffInHours < 1.0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reschedule policy violation: Reservations cannot be rescheduled within 1 hour of scheduled time.',
+        errorCode: 'RESCHEDULE_POLICY_VIOLATION'
+      });
+    }
+
+    const { newDateTime, guestsCount, tableId } = req.body;
+    const reqDate = new Date(newDateTime);
+    if (isNaN(reqDate.getTime()) || reqDate < now) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or past date/time provided for rescheduling.',
+        errorCode: 'INVALID_DATETIME'
+      });
+    }
+
+    const targetTableId = tableId || reservation.tableId;
+    const targetGuests = guestsCount || reservation.guestsCount;
+
+    const table = await Table.findById(targetTableId);
+    if (!table || table.branchId.toString() !== reservation.branchId.toString()) {
+      return res.status(404).json({
+        success: false,
+        message: 'Table not found or does not belong to the reservation branch.',
+        errorCode: 'NOT_FOUND'
+      });
+    }
+
+    if (table.capacity < targetGuests) {
+      return res.status(400).json({
+        success: false,
+        message: `Selected table capacity (${table.capacity}) is less than guests count (${targetGuests}).`,
+        errorCode: 'INSUFFICIENT_CAPACITY'
+      });
+    }
+
+    // Prevents table double-booking for the new slot
+    const slotStart = new Date(reqDate.getTime() - 59 * 60 * 1000);
+    const slotEnd = new Date(reqDate.getTime() + 59 * 60 * 1000);
+
+    const conflictingReservation = await Reservation.findOne({
+      _id: { $ne: reservation._id },
+      tableId: targetTableId,
+      status: { $in: ['pending', 'confirmed'] },
+      dateTime: { $gte: slotStart, $lte: slotEnd }
+    });
+
+    if (conflictingReservation) {
+      return res.status(409).json({
+        success: false,
+        message: 'Table double-booking conflict! The selected table is already reserved for this new time slot.',
+        errorCode: 'TABLE_SLOT_CONFLICT'
+      });
+    }
+
+    reservation.dateTime = reqDate;
+    if (tableId) reservation.tableId = tableId;
+    if (guestsCount) reservation.guestsCount = guestsCount;
+    reservation.status = 'confirmed';
+    await reservation.save();
+
+    const updated = await Reservation.findById(reservation._id)
+      .populate('branchId', 'name')
+      .populate('tableId', 'tableNumber capacity');
+
+    res.status(200).json({
+      success: true,
+      message: 'Reservation rescheduled successfully',
+      data: updated
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getCustomerReservationHistory = async (req, res, next) => {
+  try {
+    let targetCustomerId = req.user.id;
+    if (req.params.id) {
+      targetCustomerId = req.params.id;
+    } else if (req.params.customerId) {
+      targetCustomerId = req.params.customerId;
+    }
+
+    const reservations = await Reservation.find({ customerId: targetCustomerId })
+      .populate('branchId', 'name address phone')
+      .populate('tableId', 'tableNumber capacity')
+      .sort({ dateTime: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: reservations.length,
+      data: reservations
+    });
+  } catch (error) {
+    next(error);
+  }
+};

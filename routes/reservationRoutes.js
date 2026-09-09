@@ -12,9 +12,16 @@ const reservationSchema = Joi.object({
   guestsCount: Joi.number().integer().min(1).required()
 });
 
+const rescheduleSchema = Joi.object({
+  newDateTime: Joi.date().iso().required(),
+  tableId: Joi.string().allow('', null),
+  guestsCount: Joi.number().integer().min(1)
+});
+
 router.post('/', authenticate, validate(reservationSchema), reservationController.reserveTable);
 router.get('/available-tables', reservationController.getAvailableTables);
 router.get('/', authenticate, reservationController.getReservations);
 router.put('/:id/cancel', authenticate, reservationController.cancelReservation);
+router.put('/:id/reschedule', authenticate, validate(rescheduleSchema), reservationController.rescheduleReservation);
 
 module.exports = router;
