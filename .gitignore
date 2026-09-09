@@ -17,3 +17,9 @@ logs/
 
 # Temp / Scratch files
 scratch/
+
+# Postman client metadata & local workspace cache
+.postman/
+postman/.postman/
+postman/Restaurant Table Reservation & Food Ordering System (CIA-3)/
+postman/postman/

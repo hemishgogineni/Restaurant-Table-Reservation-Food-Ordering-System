@@ -39,7 +39,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // HTML Routes - must come before 404 handler
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login-cosmic.html'));
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.get('/', (req, res) => {
