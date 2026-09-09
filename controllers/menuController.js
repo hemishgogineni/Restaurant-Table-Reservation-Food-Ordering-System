@@ -5,6 +5,7 @@ exports.getMenu = async (req, res, next) => {
     const filter = {};
     if (req.query.branchId) filter.branchId = req.query.branchId;
     if (req.query.category) filter.category = req.query.category;
+    if (req.query.dietaryPreference) filter.dietaryPreference = req.query.dietaryPreference;
     if (req.query.availableOnly === 'true') filter.isAvailable = true;
 
     const items = await MenuItem.find(filter).populate('branchId', 'name');
@@ -36,8 +37,8 @@ exports.getMenuItemById = async (req, res, next) => {
 
 exports.createMenuItem = async (req, res, next) => {
   try {
-    const { branchId, name, category, price, description, isAvailable } = req.body;
-    const item = await MenuItem.create({ branchId, name, category, price, description, isAvailable });
+    const { branchId, name, category, price, description, dietaryPreference, isAvailable } = req.body;
+    const item = await MenuItem.create({ branchId, name, category, price, description, dietaryPreference, isAvailable });
     res.status(201).json({
       success: true,
       message: 'Menu item created successfully',

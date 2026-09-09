@@ -81,7 +81,7 @@ Modern restaurant chains require an end-to-end digital backend system that enabl
 | # | Module Name | Implementation Status | Features Covered |
 |---|---|---|---|
 | 1 | **Customer Registration & Auth** | Completed | JWT authentication, bcrypt password hashing, role separation (`customer`, `kitchen`, `admin`). |
-| 2 | **Menu Management** | Completed | CRUD for branch menu items with categories, prices, descriptions, availability toggles. |
+| 2 | **Menu Management** | Completed | CRUD for branch menu items with categories, prices, descriptions, availability toggles, **and Dietary Preference filtering (Bonus)**. |
 | 3 | **Table Inventory Management** | Completed | Branch-wise table seating capacity definition and availability management. |
 | 4 | **Table Reservation Engine** | Completed | Slot-based booking system with **conflict validation preventing double-booking**. |
 | 5 | **Food Order Placement** | Completed | Dine-in and Takeaway food ordering with menu price snapshotting and item availability check. |

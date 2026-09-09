@@ -7,6 +7,7 @@ const menuItemSchema = new mongoose.Schema(
     category: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     description: { type: String, trim: true },
+    dietaryPreference: { type: String, enum: ['Veg', 'Non-Veg', 'Vegan', 'Gluten-Free'], default: 'Non-Veg' },
     isAvailable: { type: Boolean, default: true }
   },
   { timestamps: true }
